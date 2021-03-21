@@ -1,0 +1,1 @@
+({{ className }}) {{ playerName }} is ranked {{ playerRank }}/{{ mapCompletions }} on {{ mapName }} with time: {{ runLength }} ({{ demoUrl }})
