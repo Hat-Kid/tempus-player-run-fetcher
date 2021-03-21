@@ -226,6 +226,8 @@ void ParseResults(SteamId playerId)
     std::string result;
 
     std::vector<Run> runList = CreateRunList(playerId);
+    std::vector<Run> soldierRuns = {};
+    std::vector<Run> demoRuns = {};
 
     std::sort(runList.begin(), runList.end(),
               [](const Run &run, const Run &run1)
@@ -233,42 +235,114 @@ void ParseResults(SteamId playerId)
                   return (run.m_iClass < run1.m_iClass);
               });
 
-    std::chrono::milliseconds cumulativeRunLength(0);
-
-    for (int i = 0; i < runList.size(); i++)
-    {
-        if (runList.at(i).m_szPlayerName == "null")
-        {
-            continue;
-        }
-
-        std::chrono::milliseconds runLength(static_cast<int>(runList.at(i).GetRunLength() * 1000));
-
-        cumulativeRunLength += runLength;
-
-        data["mapName"] = runList.at(i).m_szMapName;
-        data["runLength"] = ConvertMSToHHMMSSMS(runLength);
-        data["playerName"] = runList.at(i).m_szPlayerName;
-        data["className"] = ConvertToClassName(runList.at(i).m_iClass);
-        data["mapCompletions"] = runList.at(i).m_iMapCompletions;
-        data["demoUrl"] = runList.at(i).GetDemoUrl();
-        data["playerRank"] = runList.at(i).m_iRank;
-
-        std::cout << "Parsing " << runList.at(i).m_szMapName << "..." << "\n";
-
-        result += env.render(temp, data) + "\n";
-    }
-
     int soldier = 3;
     int demo = 4;
 
     auto soldierRunCount = std::count_if(runList.begin(), runList.end(), [&soldier](const Run& run) { return run.m_iClass == soldier; });
     auto demoRunCount = std::count_if(runList.begin(), runList.end(), [&demo](const Run& run) { return run.m_iClass == demo; });
 
+    for (int i = 0; i < soldierRunCount; i++)
+    {
+        soldierRuns.push_back(runList.at(i));
+
+        std::sort(soldierRuns.begin(), soldierRuns.end(),
+                  [](const Run& run, const Run& run1)
+                  {
+                      if (run.m_bHasValidDemo && run1.m_bHasValidDemo)
+                      {
+                          return (run.m_iEndTick - run.m_iStartTick) < (run1.m_iEndTick - run1.m_iStartTick);
+                      }
+                      else
+                      {
+                          return run.m_flDuration < run1.m_flDuration;
+                      }
+                  });
+    }
+
+    for (int i = soldierRunCount; i < soldierRunCount + demoRunCount; i++)
+    {
+        demoRuns.push_back(runList.at(i));
+
+        std::sort(demoRuns.begin(), demoRuns.end(),
+                  [](const Run& run, const Run& run1)
+                  {
+                      if (run.m_bHasValidDemo && run1.m_bHasValidDemo)
+                      {
+                          return (run.m_iEndTick - run.m_iStartTick) < (run1.m_iEndTick - run1.m_iStartTick);
+                      }
+                      else
+                      {
+                          return run.m_flDuration < run1.m_flDuration;
+                      }
+                  });
+    }
+
+    std::chrono::milliseconds cumulativeSoldierRunLength(0);
+    std::chrono::milliseconds cumulativeDemoRunLength(0);
+    std::chrono::milliseconds cumulativeRunLength(0);
+
+    for (int i = 0; i < soldierRuns.size(); i++)
+    {
+        if (soldierRuns.at(i).m_szPlayerName == "null")
+        {
+            continue;
+        }
+
+        std::chrono::milliseconds runLength(static_cast<int>(soldierRuns.at(i).GetRunLength() * 1000));
+
+        cumulativeSoldierRunLength += runLength;
+
+        data["mapName"] = soldierRuns.at(i).m_szMapName;
+        data["runLength"] = ConvertMSToHHMMSSMS(runLength);
+        data["playerName"] = soldierRuns.at(i).m_szPlayerName;
+        data["className"] = ConvertToClassName(soldierRuns.at(i).m_iClass);
+        data["mapCompletions"] = soldierRuns.at(i).m_iMapCompletions;
+        data["demoUrl"] = soldierRuns.at(i).GetDemoUrl();
+        data["playerRank"] = soldierRuns.at(i).m_iRank;
+
+        std::cout << "Parsing " << soldierRuns.at(i).m_szMapName << "..." << "\n";
+
+        result += env.render(temp, data) + "\n";
+
+        if (i == soldierRuns.size() - 1)
+        {
+            result += "\n";
+        }
+    }
+
+    for (int i = 0; i < demoRuns.size(); i++)
+    {
+        if (demoRuns.at(i).m_szPlayerName == "null")
+        {
+            continue;
+        }
+
+        std::chrono::milliseconds runLength(static_cast<int>(demoRuns.at(i).GetRunLength() * 1000));
+
+        cumulativeDemoRunLength += runLength;
+
+        data["mapName"] = demoRuns.at(i).m_szMapName;
+        data["runLength"] = ConvertMSToHHMMSSMS(runLength);
+        data["playerName"] = demoRuns.at(i).m_szPlayerName;
+        data["className"] = ConvertToClassName(demoRuns.at(i).m_iClass);
+        data["mapCompletions"] = demoRuns.at(i).m_iMapCompletions;
+        data["demoUrl"] = demoRuns.at(i).GetDemoUrl();
+        data["playerRank"] = demoRuns.at(i).m_iRank;
+
+        std::cout << "Parsing " << demoRuns.at(i).m_szMapName << "..." << "\n";
+
+        result += env.render(temp, data) + "\n";
+    }
+
+    cumulativeRunLength = cumulativeSoldierRunLength + cumulativeDemoRunLength;
+
     result += "\n\n" + std::string("Total runs: ") + std::to_string(runList.size()) +
                        std::string(" (") + std::to_string(soldierRunCount - 1) + " Soldier, " + std::to_string(demoRunCount) + " Demo)";
 
-    result += "\n\n" + std::string("Cumulative run length: ") + ConvertMSToHHMMSSMS(cumulativeRunLength);
+    result += "\n\n" + std::string("Cumulative run length: ") + "\n"
+           + std::string("Soldier: ") + ConvertMSToHHMMSSMS(cumulativeSoldierRunLength) + "\n"
+           + std::string("Demoman: ") + ConvertMSToHHMMSSMS(cumulativeDemoRunLength) + "\n"
+           + std::string("Total: ") + ConvertMSToHHMMSSMS(cumulativeRunLength);
 
     std::string fileName("runs.txt");
 
@@ -282,13 +356,14 @@ int main(int, char **argv)
     SetConsoleTitle(L"Tempus Player Run Fetcher");
 
     std::cout << "Enter the SteamID (format: STEAM_X:Y:Z) of the player whose runs you would like to fetch: ";
-    std::string input;
 
-    std::cin >> input;
-
+    std::string id;
+    std::cin >> id;
     std::cout << "\n";
 
-    SteamId playerId(input);
+    SteamId playerId(id);
 
     ParseResults(playerId.m_szSteamId);
+
+    return 0;
 }
