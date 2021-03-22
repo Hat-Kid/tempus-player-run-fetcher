@@ -88,7 +88,7 @@ float Run::GetRunLength()
 
 float ConvertTicksToSeconds(int iTicks)
 {
-    float tickInterval = 1.0f / 66.0f;
+    float tickInterval = 1.0f / (200.0f / 3.0f);
     return iTicks * tickInterval;
 }
 
