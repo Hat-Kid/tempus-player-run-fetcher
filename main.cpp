@@ -40,8 +40,19 @@ std::string FetchMapData()
     {
         curlpp::Cleanup curlCleanup;
         std::ostringstream ostream;
-        ostream << curlpp::options::Url("https://gist.githubusercontent.com/hexaflexahexagon/b4ccf1c5293e5416a74bf49eecdd2071/raw/90c385cadf145bb35608f810cc9c8c8fdc9ee9a0/tempusmaps.csv");
-        result = ostream.str();
+
+		std::ifstream mapfile;
+		mapfile.open("maps.csv", std::ifstream::in);
+		char c = mapfile.get();
+
+		while (mapfile.good()) {
+			std::cout << c;
+			ostream << c;
+			c = mapfile.get();
+		}
+		mapfile.close();
+
+		result = ostream.str();
     }
     catch (curlpp::RuntimeError &e)
     {

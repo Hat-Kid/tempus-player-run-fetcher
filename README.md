@@ -20,4 +20,14 @@ Compile the program using the given Makefile
 `make`
 
 ## Compiling (Windows)
-idk
+idk lol
+
+## Updating Map list
+Run the script to query tempus for all map names
+`./get-map-list.sh`
+
+This will generate a new `maps.csv` file that is read in by the program at runtime. 
+
+## Credits
+Hat-Kid, for actually making the program that I yoinked
+JJ, for making the make Makefile (make)
