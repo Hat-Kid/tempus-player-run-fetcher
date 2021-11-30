@@ -40,7 +40,7 @@ std::string FetchMapData()
     {
         curlpp::Cleanup curlCleanup;
         std::ostringstream ostream;
-        ostream << curlpp::options::Url("https://gist.githubusercontent.com/Hat-Kid/7ef2e675d26bcbdc247f84dfc83c8c4f/raw/81dcd0ca5e145244ed84c72b8bcd723af03e2ea9/tempusmaps.csv");
+        ostream << curlpp::options::Url("https://gist.githubusercontent.com/hexaflexahexagon/b4ccf1c5293e5416a74bf49eecdd2071/raw/90c385cadf145bb35608f810cc9c8c8fdc9ee9a0/tempusmaps.csv");
         result = ostream.str();
     }
     catch (curlpp::RuntimeError &e)
