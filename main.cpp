@@ -353,7 +353,9 @@ void ParseResults(SteamId playerId)
 
 int main(int, char **argv)
 {
-    SetConsoleTitle(L"Tempus Player Run Fetcher");
+#ifdef _WIN32
+	SetConsoleTitle(L"Tempus Player Run Fetcher");
+#endif
 
     std::cout << "Enter the SteamID (format: STEAM_X:Y:Z) of the player whose runs you would like to fetch: ";
 
@@ -367,3 +369,4 @@ int main(int, char **argv)
 
     return 0;
 }
+
